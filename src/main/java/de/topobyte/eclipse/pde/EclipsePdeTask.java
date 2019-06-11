@@ -18,10 +18,13 @@
 package de.topobyte.eclipse.pde;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 
@@ -73,13 +76,14 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 		});
 
 		createBuildProperties(project, config);
+		createManifestMf(project, config);
 	}
 
 	private void createBuildProperties(Project project, Configuration config)
 			throws IOException
 	{
-		Path buildDir = project.getProjectDir().toPath();
-		Path fileBuildProperties = buildDir
+		Path projectDir = project.getProjectDir().toPath();
+		Path fileBuildProperties = projectDir
 				.resolve(Constants.FILE_NAME_BUILD_PROPERTIES);
 		logger.lifecycle("creating build.properties: " + fileBuildProperties);
 
@@ -123,6 +127,68 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 		}
 
 		OutputStream output = Files.newOutputStream(fileBuildProperties);
+		IOUtils.write(strb.toString(), output, StandardCharsets.UTF_8);
+	}
+
+	private void createManifestMf(Project project, Configuration config)
+			throws IOException
+	{
+		Path projectDir = project.getProjectDir().toPath();
+		Path fileManifestMf = projectDir.resolve(Constants.PATH_MANIFEST_MF);
+		logger.lifecycle("creating MANIFEST.MF: " + fileManifestMf);
+		Files.createDirectories(fileManifestMf.getParent());
+
+		Path fileManifestHead = projectDir.resolve("manifest.mf");
+		if (!Files.exists(fileManifestHead)) {
+			String message = String.format("Please create a file '%s'.",
+					fileManifestHead);
+			logger.error(message);
+			throw new IllegalStateException(message);
+		}
+		InputStream input = Files.newInputStream(fileManifestHead);
+		List<String> lines = IOUtils.readLines(input, StandardCharsets.UTF_8);
+
+		String ls = SystemProperties.getInstance().getLineSeparator();
+
+		StringBuilder strb = new StringBuilder();
+		for (String line : lines) {
+			strb.append(line);
+			strb.append(ls);
+		}
+
+		List<String> entries = new ArrayList<>();
+		Set<ResolvedArtifact> artifacts = config.getResolvedConfiguration()
+				.getResolvedArtifacts();
+		for (ResolvedArtifact artifact : artifacts) {
+			ComponentArtifactIdentifier id = artifact.getId();
+			if (id instanceof ModuleComponentArtifactIdentifier) {
+				ModuleComponentArtifactIdentifier mcai = (ModuleComponentArtifactIdentifier) id;
+				ModuleComponentIdentifier mci = mcai.getComponentIdentifier();
+				String module = mci.getModule();
+				String version = mci.getVersion();
+
+				entries.add(String.format("libs/%s-%s.jar", module, version));
+			}
+		}
+		entries.add(".");
+
+		strb.append("Bundle-ClassPath: ");
+		strb.append(entries.get(0));
+		if (entries.size() > 1) {
+			strb.append(",");
+		}
+		strb.append(ls);
+		for (int i = 1; i < entries.size(); i++) {
+			strb.append(" ");
+			strb.append(entries.get(i));
+			if (i < entries.size() - 1) {
+				strb.append(",");
+			}
+			// we need the line break at the end of the file, too
+			strb.append(ls);
+		}
+
+		OutputStream output = Files.newOutputStream(fileManifestMf);
 		IOUtils.write(strb.toString(), output, StandardCharsets.UTF_8);
 	}
 
