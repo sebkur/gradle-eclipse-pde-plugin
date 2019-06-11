@@ -17,10 +17,15 @@
 
 package de.topobyte.eclipse.pde;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.SortedSet;
 
+import org.apache.commons.io.IOUtils;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencySet;
@@ -28,6 +33,7 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.component.ComponentArtifactIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.internal.SystemProperties;
 import org.gradle.internal.component.external.model.ModuleComponentArtifactIdentifier;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 
@@ -41,7 +47,7 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 	}
 
 	@TaskAction
-	protected void configure()
+	protected void configure() throws IOException
 	{
 		Project project = getProject();
 
@@ -64,10 +70,28 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 			logger.info(String.format("%s:%s:%s", group, module, version));
 		});
 
-		Path buildDir = project.getBuildDir().toPath();
+		Path buildDir = project.getProjectDir().toPath();
 		Path fileBuildProperties = buildDir
 				.resolve(Constants.FILE_NAME_BUILD_PROPERTIES);
 		logger.lifecycle("creating build.properties: " + fileBuildProperties);
+
+		String ls = SystemProperties.getInstance().getLineSeparator();
+
+		StringBuilder strb = new StringBuilder();
+		strb.append("source.. = src/main/java");
+		// TODO: use source path from sourceSets config
+		strb.append(ls);
+		strb.append("output.. = bin/");
+		strb.append(ls);
+		strb.append("bin.includes = plugin.xml");
+		strb.append(",\\");
+		strb.append(ls);
+		strb.append("               META-INF/");
+		strb.append(",\\");
+		strb.append(ls);
+		strb.append("               .");
+
+		// TODO: allow additional entries via plugin configuration
 
 		Set<ResolvedArtifact> artifacts = configuration
 				.getResolvedConfiguration().getResolvedArtifacts();
@@ -83,9 +107,15 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 				logger.lifecycle(String.format("Normal: %s:%s:%s", group,
 						module, version));
 
-				// TODO: create file
+				strb.append(",\\");
+				strb.append(ls);
+				strb.append(String.format("               libs/%s-%s.jar",
+						module, version));
 			}
 		}
+
+		OutputStream output = Files.newOutputStream(fileBuildProperties);
+		IOUtils.write(strb.toString(), output, StandardCharsets.UTF_8);
 	}
 
 }
