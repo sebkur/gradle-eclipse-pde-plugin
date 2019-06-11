@@ -59,6 +59,7 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 		}
 
 		String configName = getConfiguration().getConfiguration();
+		logger.lifecycle("configuration: " + configName);
 
 		Configuration configuration = project.getConfigurations()
 				.getByName(configName);
@@ -67,7 +68,8 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 			String group = d.getGroup();
 			String module = d.getName();
 			String version = d.getVersion();
-			logger.info(String.format("%s:%s:%s", group, module, version));
+			logger.lifecycle(String.format("Declared: %s:%s:%s", group, module,
+					version));
 		});
 
 		Path buildDir = project.getProjectDir().toPath();
