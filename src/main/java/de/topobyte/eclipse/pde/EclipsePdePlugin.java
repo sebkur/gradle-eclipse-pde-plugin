@@ -17,14 +17,18 @@
 
 package de.topobyte.eclipse.pde;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
+import org.gradle.plugins.ide.eclipse.GenerateEclipseClasspath;
 import org.gradle.plugins.ide.eclipse.GenerateEclipseProject;
 import org.gradle.plugins.ide.eclipse.model.BuildCommand;
+import org.gradle.plugins.ide.eclipse.model.EclipseClasspath;
 import org.gradle.plugins.ide.eclipse.model.EclipseProject;
 
 public class EclipsePdePlugin implements Plugin<Project>
@@ -51,6 +55,17 @@ public class EclipsePdePlugin implements Plugin<Project>
 					.add(new BuildCommand("org.eclipse.pde.ManifestBuilder"));
 			buildCommands
 					.add(new BuildCommand("org.eclipse.pde.SchemaBuilder"));
+		});
+
+		project.getTasks().findByName("eclipseClasspath").doFirst(e -> {
+			GenerateEclipseClasspath gec = (GenerateEclipseClasspath) e;
+			EclipseClasspath cp = gec.getClasspath();
+			cp.getFile().withXml(a -> {
+				Map<String, String> map = new LinkedHashMap<>();
+				map.put("kind", "con");
+				map.put("path", "org.eclipse.pde.core.requiredPlugins");
+				a.asNode().appendNode("classpathentry", map);
+			});
 		});
 
 		EclipsePdePluginExtension extension = project.getExtensions()
