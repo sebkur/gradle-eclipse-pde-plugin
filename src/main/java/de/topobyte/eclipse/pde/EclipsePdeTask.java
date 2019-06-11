@@ -61,9 +61,9 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 		String configName = getConfiguration().getConfiguration();
 		logger.lifecycle("configuration: " + configName);
 
-		Configuration configuration = project.getConfigurations()
+		Configuration config = project.getConfigurations()
 				.getByName(configName);
-		DependencySet dependencies = configuration.getAllDependencies();
+		DependencySet dependencies = config.getAllDependencies();
 		dependencies.all(d -> {
 			String group = d.getGroup();
 			String module = d.getName();
@@ -72,6 +72,12 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 					version));
 		});
 
+		createBuildProperties(project, config);
+	}
+
+	private void createBuildProperties(Project project, Configuration config)
+			throws IOException
+	{
 		Path buildDir = project.getProjectDir().toPath();
 		Path fileBuildProperties = buildDir
 				.resolve(Constants.FILE_NAME_BUILD_PROPERTIES);
@@ -95,8 +101,8 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 
 		// TODO: allow additional entries via plugin configuration
 
-		Set<ResolvedArtifact> artifacts = configuration
-				.getResolvedConfiguration().getResolvedArtifacts();
+		Set<ResolvedArtifact> artifacts = config.getResolvedConfiguration()
+				.getResolvedArtifacts();
 		for (ResolvedArtifact artifact : artifacts) {
 			ComponentArtifactIdentifier id = artifact.getId();
 			if (id instanceof ModuleComponentArtifactIdentifier) {
