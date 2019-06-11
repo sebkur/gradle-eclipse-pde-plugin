@@ -17,10 +17,15 @@
 
 package de.topobyte.eclipse.pde;
 
+import java.util.List;
+
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
+import org.gradle.plugins.ide.eclipse.GenerateEclipseProject;
+import org.gradle.plugins.ide.eclipse.model.BuildCommand;
+import org.gradle.plugins.ide.eclipse.model.EclipseProject;
 
 public class EclipsePdePlugin implements Plugin<Project>
 {
@@ -36,8 +41,17 @@ public class EclipsePdePlugin implements Plugin<Project>
 			throw new IllegalStateException("No Eclipse plugin detected.");
 		}
 
-		EclipsePlugin eclipsePlugin = project.getPlugins()
-				.getPlugin(EclipsePlugin.class);
+		project.getTasks().findByName("eclipseProject").doFirst(e -> {
+			GenerateEclipseProject gep = (GenerateEclipseProject) e;
+			EclipseProject projectModel = gep.getProjectModel();
+
+			projectModel.getNatures().add("org.eclipse.pde.PluginNature");
+			List<BuildCommand> buildCommands = projectModel.getBuildCommands();
+			buildCommands
+					.add(new BuildCommand("org.eclipse.pde.ManifestBuilder"));
+			buildCommands
+					.add(new BuildCommand("org.eclipse.pde.SchemaBuilder"));
+		});
 
 		EclipsePdePluginExtension extension = project.getExtensions()
 				.create("eclipsePde", EclipsePdePluginExtension.class);
