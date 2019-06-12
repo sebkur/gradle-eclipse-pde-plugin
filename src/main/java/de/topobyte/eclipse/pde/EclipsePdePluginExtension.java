@@ -17,12 +17,17 @@
 
 package de.topobyte.eclipse.pde;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class EclipsePdePluginExtension
 {
 
 	private String configuration = "compile";
 
 	private boolean debug = false;
+
+	private List<String> additionalResources = new ArrayList<>();
 
 	public String getConfiguration()
 	{
@@ -42,6 +47,16 @@ public class EclipsePdePluginExtension
 	public void setDebug(boolean debug)
 	{
 		this.debug = debug;
+	}
+
+	public List<String> getAdditionalResources()
+	{
+		return additionalResources;
+	}
+
+	public void setAdditionalResources(List<String> additionalResources)
+	{
+		this.additionalResources = additionalResources;
 	}
 
 }

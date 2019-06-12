@@ -103,7 +103,14 @@ public class EclipsePdeTask extends AbstractEclipsePdeTask
 		strb.append(ls);
 		strb.append("               .");
 
-		// TODO: allow additional entries via plugin configuration
+		List<String> additionalResources = getConfiguration()
+				.getAdditionalResources();
+		for (String resource : additionalResources) {
+			strb.append(",\\");
+			strb.append(ls);
+			strb.append("               ");
+			strb.append(resource);
+		}
 
 		Set<ResolvedArtifact> artifacts = config.getResolvedConfiguration()
 				.getResolvedArtifacts();
