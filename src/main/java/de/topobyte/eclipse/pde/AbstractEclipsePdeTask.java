@@ -19,12 +19,14 @@ package de.topobyte.eclipse.pde;
 
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.tasks.Internal;
 
 public abstract class AbstractEclipsePdeTask extends ConventionTask
 {
 
 	protected final Logger logger = getLogger();
 
+	@Internal
 	protected EclipsePdePluginExtension configuration;
 
 	public EclipsePdePluginExtension getConfiguration()

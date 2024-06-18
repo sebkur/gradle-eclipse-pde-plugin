@@ -23,7 +23,7 @@ import java.util.List;
 public class EclipsePdePluginExtension
 {
 
-	private String configuration = "compile";
+	private String configuration = "runtimeClasspath";
 
 	private boolean debug = false;
 
