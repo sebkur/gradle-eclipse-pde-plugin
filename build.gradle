@@ -1,11 +1,11 @@
 wrapper {
-    gradleVersion = '5.2.1'
+    gradleVersion = '7.6.2'
 }
 
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'eclipse'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'com.gradle.plugin-publish'
 
 group = pGroup
@@ -34,23 +34,14 @@ buildscript {
 }
 
 repositories {
-	jcenter()
 	mavenCentral()
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: maven_url_topobyte_temp)
-        }
-    }
-}
-
 dependencies {
-	compile gradleApi()
-	compile localGroovy()
+	implementation gradleApi()
+	implementation localGroovy()
 
-    compile 'commons-io:commons-io:2.6'
+    implementation 'commons-io:commons-io:2.6'
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
@@ -77,20 +68,24 @@ artifacts {
 
 def pomInfo = new XmlSlurper().parse(new File('info.pom'));
 
-afterEvaluate { project ->
-    uploadArchives {
-        repositories {
-            mavenDeployer {
-                pom.project {
-                    name pomInfo.name
-                    description pomInfo.description
-                    url pomInfo.url
-                    licenses {
-                        license {
-                            name pomInfo.licenseName
-                            url pomInfo.licenseUrl
-                            distribution pomInfo.licenseDistribution
-                        }
+publishing {
+    repositories {
+        maven {
+            url = maven_path_topobyte_temp
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            pom {
+                name = "$pomInfo.name"
+                description = "$pomInfo.description"
+                url = "$pomInfo.url"
+                licenses {
+                    license {
+                        name = "$pomInfo.licenseName"
+                        url = "$pomInfo.licenseUrl"
+                        distribution = "$pomInfo.licenseDistribution"
                     }
                 }
             }
